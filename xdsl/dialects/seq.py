@@ -9,6 +9,7 @@ from xdsl.dialects.builtin import (
     IntegerAttr,
     IntegerType,
     TypeAttribute,
+    i1,
 )
 from xdsl.ir import Dialect, Operation, OpResult, SSAValue
 from xdsl.irdl import (
@@ -77,10 +78,40 @@ class ClockDivider(IRDLOperation):
         printer.print(self.pow2.value.data)
 
 
+@irdl_op_definition
+class ClockMuxOp(IRDLOperation):
+    """Produces a clock divided by a power of two"""
+
+    name = "seq.clock_mux"
+
+    cond: Operand = operand_def(i1)
+    trueClock: Operand = operand_def(ClockType)
+    falseClock: Operand = operand_def(ClockType)
+    result: OpResult = result_def(ClockType)
+
+    @classmethod
+    def parse(cls, parser: Parser):
+        cond = parser.parse_operand()
+        parser.parse_punctuation(",")
+        trueClock = parser.parse_operand()
+        parser.parse_punctuation(",")
+        falseClock = parser.parse_operand()
+        return cls.build(operands=[cond, trueClock, falseClock], result_types=[clock])
+
+    def print(self, printer: Printer):
+        printer.print(" ")
+        printer.print_operand(self.cond)
+        printer.print(", ")
+        printer.print_operand(self.trueClock)
+        printer.print(", ")
+        printer.print_operand(self.falseClock)
+
+
 Seq = Dialect(
     "seq",
     [
         ClockDivider,
+        ClockMuxOp,
     ],
     [
         ClockType,
