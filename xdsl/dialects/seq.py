@@ -13,12 +13,11 @@ from xdsl.dialects.builtin import (
     TypeAttribute,
     i1,
 )
-from xdsl.ir import Attribute, Dialect, Operation, OpResult, SSAValue
+from xdsl.ir import Attribute, Dialect, Operation, SSAValue
 from xdsl.irdl import (
     AttrSizedOperandSegments,
     ConstraintVar,
     IRDLOperation,
-    Operand,
     ParametrizedAttribute,
     attr_def,
     irdl_attr_definition,
@@ -27,8 +26,6 @@ from xdsl.irdl import (
     opt_operand_def,
     result_def,
 )
-from xdsl.parser import Parser
-from xdsl.printer import Printer
 from xdsl.utils.exceptions import VerifyException
 
 
@@ -50,15 +47,15 @@ class ClockDivider(IRDLOperation):
 
     name = "seq.clock_div"
 
-    pow2 = attr_def(AnyIntegerAttr)
-    clockIn: Operand = operand_def(ClockType)
-    clockOut: OpResult = result_def(ClockType)
+    pow2 = attr_def(IntegerAttr[Annotated[IntegerType, IntegerType(8)]])
+    input = operand_def(ClockType())
+    output = result_def(ClockType())
 
-    def __init__(self, clockIn: SSAValue | Operation, pow2: int | AnyIntegerAttr):
+    def __init__(self, input: SSAValue | Operation, pow2: int | AnyIntegerAttr):
         if isinstance(pow2, int):
             pow2 = IntegerAttr(pow2, IntegerType(8))
         super().__init__(
-            operands=[clockIn], attributes={"pow2": pow2}, result_types=[clock]
+            operands=[input], attributes={"pow2": pow2}, result_types=[clock]
         )
 
     def verify_(self) -> None:
@@ -69,18 +66,7 @@ class ClockDivider(IRDLOperation):
                 f"divider value {self.pow2.value.data} is not a power of 2"
             )
 
-    @classmethod
-    def parse(cls, parser: Parser):
-        input_ = parser.parse_operand()
-        parser.parse_keyword("by")
-        divider = parser.parse_integer()
-        return cls(input_, divider)
-
-    def print(self, printer: Printer):
-        printer.print(" ")
-        printer.print_operand(self.clockIn)
-        printer.print(" by ")
-        printer.print(self.pow2.value.data)
+    assembly_format = "$input `by` $pow2 attr-dict"
 
 
 @irdl_op_definition
