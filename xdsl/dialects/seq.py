@@ -97,12 +97,14 @@ class CompRegOp(IRDLOperation):
     clk = operand_def(clock)
     reset = opt_operand_def(i1)
     reset_value = opt_operand_def(DataType)
+    power_on_value = opt_operand_def(DataType)
     data = result_def(DataType)
 
     irdl_options = [AttrSizedOperandSegments()]
 
     assembly_format = (
-        "$input `,` $clk (`reset` $reset^ `,` $reset_value)? attr-dict "
+        "$input `,` $clk (`reset` $reset^ `,` $reset_value)? "
+        "(`powerOn` $power_on_value^)? attr-dict "
         "`:` type($input)"
     )
 
